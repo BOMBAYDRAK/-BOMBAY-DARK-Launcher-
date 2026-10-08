@@ -257,17 +257,9 @@ public class MainActivity extends Activity {
         item.setMargins(dp(3),dp(2),dp(3),0);row.addView(cell,item);
         FrameLayout tile=new FrameLayout(this);
         tile.setBackground(surface(0xF0161418,LINE,13));
-        if(found!=null){
-            ImageView img=new ImageView(this);
-            img.setImageDrawable(found.icon);
-            android.graphics.ColorMatrix mx=new android.graphics.ColorMatrix();mx.setSaturation(0);
-            img.setColorFilter(new android.graphics.ColorMatrixColorFilter(mx));
-            img.setPadding(dp(13),dp(13),dp(13),dp(13));
-            tile.addView(img,new FrameLayout.LayoutParams(-1,-1));
-        }else{
-            TextView glyph=text(symbol,26,RED,true);glyph.setGravity(Gravity.CENTER);
-            tile.addView(glyph,new FrameLayout.LayoutParams(-1,-1));
-        }
+        TextView glyph=text(symbol,26,RED,true);
+        glyph.setGravity(Gravity.CENTER);
+        tile.addView(glyph,new FrameLayout.LayoutParams(-1,-1));
         cell.addView(tile,lp(57,57));
         TextView label=text(fallback,11,WHITE,false);
         label.setSingleLine(true);label.setGravity(Gravity.CENTER);
@@ -347,17 +339,28 @@ public class MainActivity extends Activity {
                     LinearLayout cell=column();cell.setGravity(Gravity.CENTER_HORIZONTAL);
                     LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,dp(105),1);
                     cp.setMargins(dp(2),dp(2),dp(2),dp(3));gridRow.addView(cell,cp);
-                    ImageView img=new ImageView(this);img.setImageDrawable(item.icon);img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    img.setPadding(dp(11),dp(9),dp(11),dp(9));
-                    img.setBackground(surface(0xF0151518,LINE,16));
-                    android.graphics.ColorMatrix matrix = new android.graphics.ColorMatrix();
-                    matrix.setSaturation(0);
-                    img.setColorFilter(new android.graphics.ColorMatrixColorFilter(matrix));
-                    FrameLayout framed = new FrameLayout(this);
-                    framed.addView(img,new FrameLayout.LayoutParams(-1,-1));
-                    TextView corner = text("•",17,RED,true);corner.setGravity(Gravity.RIGHT|Gravity.TOP);
-                    FrameLayout.LayoutParams cfp=new FrameLayout.LayoutParams(-1,-1);cfp.setMargins(0,dp(1),dp(6),0);
-                    framed.addView(corner,cfp);
+                    FrameLayout framed=new FrameLayout(this);
+                    framed.setBackground(surface(0xF01A171B,LINE,14));
+                    String mark=iconMark(item);
+                    if(mark!=null){
+                        TextView emblem=text(mark,mark.length()>2?16:25,RED,true);
+                        emblem.setGravity(Gravity.CENTER);
+                        framed.addView(emblem,new FrameLayout.LayoutParams(-1,-1));
+                    }else{
+                        ImageView img=new ImageView(this);
+                        img.setImageDrawable(item.icon);
+                        img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        img.setPadding(dp(12),dp(12),dp(12),dp(12));
+                        android.graphics.ColorMatrix matrix=new android.graphics.ColorMatrix();
+                        matrix.setSaturation(0);
+                        img.setColorFilter(new android.graphics.ColorMatrixColorFilter(matrix));
+                        framed.addView(img,new FrameLayout.LayoutParams(-1,-1));
+                        TextView accent=text("•",17,RED,true);
+                        accent.setGravity(Gravity.TOP|Gravity.RIGHT);
+                        FrameLayout.LayoutParams dot=new FrameLayout.LayoutParams(-1,-1);
+                        dot.setMargins(0,dp(1),dp(5),0);
+                        framed.addView(accent,dot);
+                    }
                     cell.addView(framed,lp(62,62));
                     TextView label=text(item.title,11,WHITE,false);label.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
                     label.setSingleLine(true);label.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -370,6 +373,25 @@ public class MainActivity extends Activity {
             appsGrid.addView(gridRow,lp(-1,105));
         }
         loading=false;
+    }
+    private String iconMark(AppItem item){
+        String name=(item.title+" "+item.pkg).toLowerCase(Locale.ROOT);
+        if(name.contains("telegram"))return "➤";
+        if(name.contains("whatsapp"))return "☎";
+        if(name.contains("youtube"))return "▶";
+        if(name.contains("вконтакте")||name.contains(".vk.")||name.endsWith("vk"))return "ВК";
+        if(name.contains("music")||name.contains("музык")||name.contains("suno"))return "♫";
+        if(name.contains("camera")||name.contains("камера"))return "◎";
+        if(name.contains("gallery")||name.contains("галерея")||name.contains("фото"))return "▣";
+        if(name.contains("setting")||name.contains("настрой"))return "⚙";
+        if(name.contains("calendar")||name.contains("календар"))return "31";
+        if(name.contains("clock")||name.contains("час"))return "◷";
+        if(name.contains("mail")||name.contains("почта"))return "✉";
+        if(name.contains("file")||name.contains("файл"))return "▤";
+        if(name.contains("calc")||name.contains("калькулятор"))return "±";
+        if(name.contains("phone")||name.contains("телефон"))return "☎";
+        if(name.contains("карты")||name.contains("maps"))return "⌖";
+        return null;
     }
     private LinearLayout createControls(){
         LinearLayout page=column();page.setBackgroundColor(0xFF0D0D10);

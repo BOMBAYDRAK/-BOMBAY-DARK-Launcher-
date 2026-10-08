@@ -61,7 +61,10 @@ public class MainActivity extends Activity {
     private static final int GREY = Color.rgb(167,167,176);
     private final Handler handler = new Handler(Looper.getMainLooper());
     private FrameLayout base;
-    private LinearLayout home, drawer, controls;
+    private LinearLayout home, drawer, controls, dialer, calculator;
+    private TextView dialNumber, calcDisplay;
+    private String enteredNumber = "";
+    private String calcInput = "";
     private LinearLayout appsGrid;
     private TextView clockBig, clockSmall, dateSmall;
     private EditText search;
@@ -171,9 +174,13 @@ public class MainActivity extends Activity {
         home=createHome();
         drawer=createDrawer();
         controls=createControls();
+        dialer=createDialer();
+        calculator=createCalculator();
         base.addView(home,new FrameLayout.LayoutParams(-1,-1));
         base.addView(drawer,new FrameLayout.LayoutParams(-1,-1));
         base.addView(controls,new FrameLayout.LayoutParams(-1,-1));
+        base.addView(dialer,new FrameLayout.LayoutParams(-1,-1));
+        base.addView(calculator,new FrameLayout.LayoutParams(-1,-1));
         setContentView(base);
         show(0);
     }
@@ -227,10 +234,10 @@ public class MainActivity extends Activity {
         page.addView(row2,lp(-1,87));
 
         LinearLayout dock=row();dock.setGravity(Gravity.CENTER);dock.setPadding(0,dp(6),0,dp(2));
-        dock.addView(dockButton("☎",()->safeLaunch(new Intent(Intent.ACTION_DIAL))));
+        dock.addView(dockButton("☎",()->show(3)));
         dock.addView(dockButton("✉",()->safeLaunch(new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:")))));
         dock.addView(dockButton("▦",()->show(1)));
-        dock.addView(dockButton("◎",()->safeLaunch(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))));
+        dock.addView(dockButton("⚙",()->show(2)));
         page.addView(dock);
         return page;
     }
@@ -253,7 +260,8 @@ public class MainActivity extends Activity {
         if(found!=null){
             ImageView img=new ImageView(this);
             img.setImageDrawable(found.icon);
-            img.setColorFilter(RED,android.graphics.PorterDuff.Mode.SRC_IN);
+            android.graphics.ColorMatrix mx=new android.graphics.ColorMatrix();mx.setSaturation(0);
+            img.setColorFilter(new android.graphics.ColorMatrixColorFilter(mx));
             img.setPadding(dp(13),dp(13),dp(13),dp(13));
             tile.addView(img,new FrameLayout.LayoutParams(-1,-1));
         }else{
@@ -280,7 +288,7 @@ public class MainActivity extends Activity {
     }
     private void dockAddPlaceholder(View b,Runnable r){b.setOnClickListener(v->r.run());}
     private LinearLayout createDrawer(){
-        LinearLayout page=column();page.setBackgroundColor(0xFA0B0B0E);
+        LinearLayout page=column();page.setBackgroundColor(0xED0B0B0E);
         page.setPadding(dp(16),dp(12),dp(16),dp(5));page.setVisibility(View.GONE);
         LinearLayout head=row();
         TextView title=text("ПРИЛОЖЕНИЯ",26,WHITE,true);
@@ -339,10 +347,18 @@ public class MainActivity extends Activity {
                     LinearLayout cell=column();cell.setGravity(Gravity.CENTER_HORIZONTAL);
                     LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,dp(105),1);
                     cp.setMargins(dp(2),dp(2),dp(2),dp(3));gridRow.addView(cell,cp);
-                    ImageView img=new ImageView(this);img.setImageDrawable(item.icon);img.setColorFilter(RED,android.graphics.PorterDuff.Mode.SRC_IN);img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    img.setPadding(dp(14),dp(12),dp(14),dp(12));
-                    img.setBackground(surface(0xF0202023,LINE,16));
-                    cell.addView(img,lp(62,62));
+                    ImageView img=new ImageView(this);img.setImageDrawable(item.icon);img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    img.setPadding(dp(11),dp(9),dp(11),dp(9));
+                    img.setBackground(surface(0xF0151518,LINE,16));
+                    android.graphics.ColorMatrix matrix = new android.graphics.ColorMatrix();
+                    matrix.setSaturation(0);
+                    img.setColorFilter(new android.graphics.ColorMatrixColorFilter(matrix));
+                    FrameLayout framed = new FrameLayout(this);
+                    framed.addView(img,new FrameLayout.LayoutParams(-1,-1));
+                    TextView corner = text("•",17,RED,true);corner.setGravity(Gravity.RIGHT|Gravity.TOP);
+                    FrameLayout.LayoutParams cfp=new FrameLayout.LayoutParams(-1,-1);cfp.setMargins(0,dp(1),dp(6),0);
+                    framed.addView(corner,cfp);
+                    cell.addView(framed,lp(62,62));
                     TextView label=text(item.title,11,WHITE,false);label.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
                     label.setSingleLine(true);label.setEllipsize(android.text.TextUtils.TruncateAt.END);
                     label.setPadding(dp(1),dp(5),dp(1),0);cell.addView(label,lp(-1,34));
@@ -383,6 +399,8 @@ public class MainActivity extends Activity {
         note.setPadding(0,dp(15),0,dp(14));inner.addView(note);
         inner.addView(action("СДЕЛАТЬ ГЛАВНЫМ ЭКРАНОМ",this::chooseHome));
         inner.addView(action("ОБНОВИТЬ СПИСОК ПРИЛОЖЕНИЙ",()->{loadApps();renderApps();toast("Список обновлён");}));
+        inner.addView(action("КАЛЬКУЛЯТОР BOMBAY:DARK",()->show(4)));
+        inner.addView(action("ТЕЛЕФОН BOMBAY:DARK",()->show(3)));
         inner.addView(action("ПРОВЕРИТЬ ДИАГНОСТИКУ",this::diagnostics));
         TextView section=text("СИСТЕМА ANDROID",14,RED,true);
         section.setPadding(0,dp(20),0,dp(8));inner.addView(section);
@@ -405,6 +423,8 @@ public class MainActivity extends Activity {
         if(home!=null)home.setVisibility(page==0?View.VISIBLE:View.GONE);
         if(drawer!=null)drawer.setVisibility(page==1?View.VISIBLE:View.GONE);
         if(controls!=null)controls.setVisibility(page==2?View.VISIBLE:View.GONE);
+        if(dialer!=null)dialer.setVisibility(page==3?View.VISIBLE:View.GONE);
+        if(calculator!=null)calculator.setVisibility(page==4?View.VISIBLE:View.GONE);
     }
     private void safeLaunch(Intent intent){
         try{startActivity(intent);}catch(Throwable e){toast("Не удалось открыть приложение");}
@@ -455,6 +475,8 @@ public class MainActivity extends Activity {
     @Override public void onBackPressed(){
         if(drawer!=null&&drawer.getVisibility()==View.VISIBLE){show(0);return;}
         if(controls!=null&&controls.getVisibility()==View.VISIBLE){show(0);return;}
+        if(dialer!=null&&dialer.getVisibility()==View.VISIBLE){show(0);return;}
+        if(calculator!=null&&calculator.getVisibility()==View.VISIBLE){show(0);return;}
         super.onBackPressed();
     }
     private static class Wallpaper extends View {
@@ -478,7 +500,7 @@ public class MainActivity extends Activity {
                 paint.setShader(null);
             }
             paint.setShader(new LinearGradient(0,0,0,h,
-                new int[]{0xB9000000,0x15000000,0x25000000,0xE4000000},
+                new int[]{0x35000000,0x08000000,0x16000000,0x77000000},
                 new float[]{0f,.20f,.68f,1f},Shader.TileMode.CLAMP));
             canvas.drawRect(0,0,w,h,paint);
             paint.setShader(null);

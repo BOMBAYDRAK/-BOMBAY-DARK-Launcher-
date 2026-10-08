@@ -7,6 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -262,9 +265,9 @@ public class MainActivity extends Activity {
         label.setSingleLine(true);label.setGravity(Gravity.CENTER);
         cell.addView(label,lp(-1,23));
         cell.setOnClickListener(v->{
-            if(target!=null)safeLaunch(target.launch);
+            if(fallback.equals("Настройки"))show(2);
+            else if(target!=null)safeLaunch(target.launch);
             else if(fallback.equals("Музыка"))openMusic();
-            else if(fallback.equals("Настройки"))openSettings(Settings.ACTION_SETTINGS);
             else if(fallback.equals("Камера"))safeLaunch(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA));
             else show(1);
         });
@@ -356,7 +359,7 @@ public class MainActivity extends Activity {
         LinearLayout page=column();page.setBackgroundColor(0xFF0D0D10);
         page.setPadding(dp(16),dp(12),dp(16),dp(12));page.setVisibility(View.GONE);
         LinearLayout head=row();
-        TextView title=text("BOMBAY:DARK // ПАНЕЛЬ",19,RED,true);
+        TextView title=text("НАСТРОЙКИ // BOMBAY:DARK",20,RED,true);
         head.addView(title,new LinearLayout.LayoutParams(0,dp(60),1));
         TextView close=text("×",31,WHITE,true);close.setGravity(Gravity.CENTER);
         head.addView(close,lp(42,50));close.setOnClickListener(v->show(0));page.addView(head);
@@ -381,7 +384,14 @@ public class MainActivity extends Activity {
         inner.addView(action("СДЕЛАТЬ ГЛАВНЫМ ЭКРАНОМ",this::chooseHome));
         inner.addView(action("ОБНОВИТЬ СПИСОК ПРИЛОЖЕНИЙ",()->{loadApps();renderApps();toast("Список обновлён");}));
         inner.addView(action("ПРОВЕРИТЬ ДИАГНОСТИКУ",this::diagnostics));
-        inner.addView(action("ОТКРЫТЬ НАСТРОЙКИ ТЕЛЕФОНА",()->openSettings(Settings.ACTION_SETTINGS)));
+        TextView section=text("СИСТЕМА ANDROID",14,RED,true);
+        section.setPadding(0,dp(20),0,dp(8));inner.addView(section);
+        inner.addView(action("⌕   СЕТЬ И ИНТЕРНЕТ",()->openSettings(Settings.ACTION_WIRELESS_SETTINGS)));
+        inner.addView(action("◈   ПРИЛОЖЕНИЯ",()->openSettings(Settings.ACTION_APPLICATION_SETTINGS)));
+        inner.addView(action("▣   УВЕДОМЛЕНИЯ",()->openSettings(Settings.ACTION_APP_NOTIFICATION_SETTINGS)));
+        inner.addView(action("♫   ЗВУК И ВИБРАЦИЯ",()->openSettings(Settings.ACTION_SOUND_SETTINGS)));
+        inner.addView(action("☼   ЭКРАН И ЯРКОСТЬ",()->openSettings(Settings.ACTION_DISPLAY_SETTINGS)));
+        inner.addView(action("⚙   ОТКРЫТЬ НАСТРОЙКИ ТЕЛЕФОНА",()->openSettings(Settings.ACTION_SETTINGS)));
         return page;
     }
     private TextView tile(String name,String detail,Runnable fn){
@@ -447,25 +457,31 @@ public class MainActivity extends Activity {
         if(controls!=null&&controls.getVisibility()==View.VISIBLE){show(0);return;}
         super.onBackPressed();
     }
-    private static class Wallpaper extends View{
-        Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
-        Wallpaper(Context c){super(c);}
-        @Override protected void onDraw(Canvas c){
-            super.onDraw(c);
-            float w=getWidth(),h=getHeight();
-            p.setShader(new LinearGradient(0,0,w,h,new int[]{0xFF070709,0xFF21070E,0xFF070709},null,Shader.TileMode.CLAMP));
-            c.drawRect(0,0,w,h,p);p.setShader(null);
-            float x=w*.66f,y=h*.39f;
-            p.setColor(0x44FF1138);c.drawCircle(x,y,w*.38f,p);
-            p.setColor(0x66B60D2D);c.drawCircle(x,y,w*.31f,p);
-            p.setColor(0x99260710);c.drawCircle(x,y,w*.29f,p);
-            p.setColor(0xD6000000);
-            for(int i=0;i<17;i++){
-                float left=i*w/16f;float bw=w/12f;float tower=(float)(h*(.32+.20*Math.abs(Math.sin(i*1.7))));
-                c.drawRect(left,h-tower,left+bw,h,p);
+    private static class Wallpaper extends View {
+        private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+        private Bitmap background;
+        Wallpaper(Context c){
+            super(c);
+            try { background=BitmapFactory.decodeResource(c.getResources(),R.drawable.bombay_wallpaper); }
+            catch(Throwable ignored) { background=null; }
+        }
+        @Override protected void onDraw(Canvas canvas){
+            int w=getWidth(),h=getHeight();
+            canvas.drawColor(0xFF050507);
+            if(background!=null && !background.isRecycled()){
+                Rect src=new Rect(0,0,background.getWidth(),background.getHeight());
+                Rect dst=new Rect(0,0,w,h);
+                canvas.drawBitmap(background,src,dst,paint);
+            }else{
+                paint.setShader(new LinearGradient(0,0,w,h,0xFF09090A,0xFF4D081A,Shader.TileMode.CLAMP));
+                canvas.drawRect(0,0,w,h,paint);
+                paint.setShader(null);
             }
-            p.setStrokeWidth(2);p.setColor(0x44FF2040);
-            for(int i=0;i<12;i++)c.drawLine(0,h*(.5f+i*.04f),w,h*(.35f+i*.04f),p);
+            paint.setShader(new LinearGradient(0,0,0,h,
+                new int[]{0xB9000000,0x15000000,0x25000000,0xE4000000},
+                new float[]{0f,.20f,.68f,1f},Shader.TileMode.CLAMP));
+            canvas.drawRect(0,0,w,h,paint);
+            paint.setShader(null);
         }
     }
 }

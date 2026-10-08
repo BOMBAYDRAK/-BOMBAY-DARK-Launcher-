@@ -64,6 +64,7 @@ public class MainActivity extends Activity {
     private EditText search;
     private final List<AppItem> applications = new ArrayList<>();
     private String query = "";
+    private String category = "Все";
     private boolean loading = false;
     private final Runnable clockUpdate = new Runnable() {
         @Override public void run() {
@@ -175,42 +176,103 @@ public class MainActivity extends Activity {
     }
     private LinearLayout createHome(){
         LinearLayout page=column();
-        page.setPadding(dp(16),dp(16),dp(16),dp(10));
-        page.setGravity(Gravity.BOTTOM);
+        page.setPadding(dp(14),dp(9),dp(14),dp(5));
         LinearLayout top=row();
-        TextView brand=text("BOMBAY:DARK",16,RED,true);
-        top.addView(brand,new LinearLayout.LayoutParams(0,dp(42),1));
-        TextView menu=text("≡",29,WHITE,true);
+        TextView brand=text("BOMBAY:DARK",19,RED,true);
+        brand.setLetterSpacing(.08f);
+        top.addView(brand,new LinearLayout.LayoutParams(0,dp(47),1));
+        TextView menu=text("☷",31,WHITE,true);
         menu.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
-        top.addView(menu,lp(46,42));menu.setOnClickListener(v->show(2));
+        top.addView(menu,lp(46,45));menu.setOnClickListener(v->show(2));
         page.addView(top);
-        View space=new View(this);page.addView(space,new LinearLayout.LayoutParams(1,0,1));
-        dateSmall=text("",14,WHITE,true);page.addView(dateSmall);
-        clockBig=text("",76,WHITE,true);page.addView(clockBig,lp(-1,93));
-        TextView slogan=text("ТЁМНАЯ СТОРОНА ТВОЕГО ANDROID",12,GREY,true);page.addView(slogan);
-        View gap=new View(this);page.addView(gap,lp(1,20));
-        LinearLayout music=column();music.setPadding(dp(18),dp(10),dp(18),dp(10));
-        music.setBackground(surface(0xED121215,LINE,18));
-        music.addView(text("♫   МУЗЫКА",16,WHITE,true));
-        music.addView(text("Открыть установленный музыкальный плеер",12,GREY,false));
-        TextView play=text("▶   ОТКРЫТЬ",14,RED,true);play.setGravity(Gravity.CENTER_VERTICAL);
-        play.setPadding(0,dp(10),0,dp(4));music.addView(play);
-        music.setOnClickListener(v->openMusic());
-        LinearLayout.LayoutParams mp=lp(-1,-2);mp.setMargins(0,dp(6),0,dp(12));page.addView(music,mp);
-        TextView apps=action("⌕   ВСЕ ПРИЛОЖЕНИЯ   ↗",()->show(1));
-        apps.setBackground(surface(0xEA171719,RED,17));page.addView(apps);
-        LinearLayout dock=row();dock.setGravity(Gravity.CENTER);dock.setPadding(0,dp(12),0,dp(10));
+
+        LinearLayout clockRow=row();
+        clockBig=text("",56,WHITE,true);
+        clockBig.setShadowLayer(dp(5),0,dp(2),0xFF000000);
+        clockRow.addView(clockBig,new LinearLayout.LayoutParams(0,dp(76),1));
+        TextView mark=text("●  DARK",13,RED,true); mark.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        clockRow.addView(mark,lp(94,65));page.addView(clockRow);
+        dateSmall=text("",14,WHITE,true);dateSmall.setLetterSpacing(.05f);page.addView(dateSmall);
+        TextView caption=text("ТЁМНАЯ СТОРОНА ТВОЕГО ANDROID",11,0xFFE5ADB7,true);
+        caption.setLetterSpacing(.1f);page.addView(caption);
+
+        View empty=new View(this);
+        page.addView(empty,new LinearLayout.LayoutParams(1,0,1));
+
+        LinearLayout music=column();
+        music.setPadding(dp(16),dp(9),dp(16),dp(10));
+        music.setBackground(surface(0xE9151015,RED,16));
+        music.addView(text("♫  BOMBAY:DARK  /  МУЗЫКА",16,WHITE,true));
+        music.addView(text("Открыть музыкальный плеер",12,0xFFE0ABB3,false));
+        TextView play=text("◀◀     ▶     ▶▶",23,RED,true);
+        play.setGravity(Gravity.CENTER);play.setPadding(0,dp(3),0,0);
+        music.addView(play,lp(-1,34));music.setOnClickListener(v->openMusic());
+        LinearLayout.LayoutParams mp=lp(-1,-2);mp.setMargins(0,dp(3),0,dp(6));page.addView(music,mp);
+
+        LinearLayout row1=row();row1.setGravity(Gravity.TOP);
+        addHomeTile(row1,new String[]{"telegram"},"Telegram","✈");
+        addHomeTile(row1,new String[]{"vk","вконтакте"},"VK","ВК");
+        addHomeTile(row1,new String[]{"youtube"},"YouTube","▶");
+        addHomeTile(row1,new String[]{"музыка","music","yandex.music","zvuk"},"Музыка","♫");
+        page.addView(row1,lp(-1,87));
+
+        LinearLayout row2=row();row2.setGravity(Gravity.TOP);
+        addHomeTile(row2,new String[]{"камера","camera"},"Камера","◎");
+        addHomeTile(row2,new String[]{"галерея","gallery","фото","photos"},"Галерея","▣");
+        addHomeTile(row2,new String[]{"настройки","settings"},"Настройки","⚙");
+        addHomeTile(row2,new String[]{"файлы","files","проводник"},"Файлы","▤");
+        page.addView(row2,lp(-1,87));
+
+        LinearLayout dock=row();dock.setGravity(Gravity.CENTER);dock.setPadding(0,dp(6),0,dp(2));
         dock.addView(dockButton("☎",()->safeLaunch(new Intent(Intent.ACTION_DIAL))));
         dock.addView(dockButton("✉",()->safeLaunch(new Intent(Intent.ACTION_SENDTO,Uri.parse("smsto:")))));
         dock.addView(dockButton("▦",()->show(1)));
-        dock.addView(dockButton("⚙",()->show(2)));
+        dock.addView(dockButton("◎",()->safeLaunch(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))));
         page.addView(dock);
         return page;
     }
-    private TextView dockButton(String label,Runnable click){
+    private void addHomeTile(LinearLayout row,String[] keys,String fallback,String symbol){
+        AppItem found=null;
+        for(String key:keys){
+            for(AppItem app:applications){
+                if(app.title.toLowerCase(new Locale("ru")).contains(key) || app.pkg.toLowerCase(Locale.ROOT).contains(key)){
+                    found=app;break;
+                }
+            }
+            if(found!=null)break;
+        }
+        final AppItem target=found;
+        LinearLayout cell=column();cell.setGravity(Gravity.CENTER_HORIZONTAL);
+        LinearLayout.LayoutParams item=new LinearLayout.LayoutParams(0,dp(86),1);
+        item.setMargins(dp(3),dp(2),dp(3),0);row.addView(cell,item);
+        FrameLayout tile=new FrameLayout(this);
+        tile.setBackground(surface(0xF0161418,LINE,13));
+        if(found!=null){
+            ImageView img=new ImageView(this);
+            img.setImageDrawable(found.icon);
+            img.setColorFilter(RED,android.graphics.PorterDuff.Mode.SRC_IN);
+            img.setPadding(dp(13),dp(13),dp(13),dp(13));
+            tile.addView(img,new FrameLayout.LayoutParams(-1,-1));
+        }else{
+            TextView glyph=text(symbol,26,RED,true);glyph.setGravity(Gravity.CENTER);
+            tile.addView(glyph,new FrameLayout.LayoutParams(-1,-1));
+        }
+        cell.addView(tile,lp(57,57));
+        TextView label=text(fallback,11,WHITE,false);
+        label.setSingleLine(true);label.setGravity(Gravity.CENTER);
+        cell.addView(label,lp(-1,23));
+        cell.setOnClickListener(v->{
+            if(target!=null)safeLaunch(target.launch);
+            else if(fallback.equals("Музыка"))openMusic();
+            else if(fallback.equals("Настройки"))openSettings(Settings.ACTION_SETTINGS);
+            else if(fallback.equals("Камера"))safeLaunch(new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA));
+            else show(1);
+        });
+    }
+        private TextView dockButton(String label,Runnable click){
         TextView b=text(label,27,RED,true);b.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(61),1);
-        p.setMargins(dp(4),0,dp(4),0);b.setBackground(surface(0xF0141416,LINE,15));
+        p.setMargins(dp(4),0,dp(4),0);b.setBackground(surface(0xF0141416,RED,15));
         dockAddPlaceholder(b,click);b.setLayoutParams(p);return b;
     }
     private void dockAddPlaceholder(View b,Runnable r){b.setOnClickListener(v->r.run());}
@@ -228,8 +290,20 @@ public class MainActivity extends Activity {
         search.setTextSize(15);search.setHint("⌕  Поиск приложений");
         search.setPadding(dp(15),0,dp(12),0);search.setBackground(surface(PANEL,LINE,15));
         page.addView(search,lp(-1,50));
-        TextView caption=text("ВСЕ ПРИЛОЖЕНИЯ",13,RED,true);
-        caption.setPadding(0,dp(13),0,dp(10));page.addView(caption);
+        LinearLayout tabs=row();tabs.setPadding(0,dp(13),0,dp(9));
+        for(String tab:new String[]{"Все","Соцсети","Медиа","Система"}){
+            TextView chip=text(tab,12,tab.equals(category)?WHITE:GREY,true);
+            chip.setGravity(Gravity.CENTER);
+            chip.setBackground(surface(tab.equals(category)?0xFF8E1024:0xFF19191C,tab.equals(category)?RED:LINE,11));
+            LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(0,dp(39),1);
+            tp.setMargins(dp(2),0,dp(2),0);tabs.addView(chip,tp);
+            chip.setOnClickListener(v->{category=tab; for(int z=0;z<tabs.getChildCount();z++){
+                TextView t=(TextView)tabs.getChildAt(z);boolean sel=t.getText().toString().equals(category);
+                t.setTextColor(sel?WHITE:GREY);
+                t.setBackground(surface(sel?0xFF8E1024:0xFF19191C,sel?RED:LINE,11));
+            }renderApps();});
+        }
+        page.addView(tabs);
         ScrollView sc=new ScrollView(this);sc.setFillViewport(false);
         appsGrid=column();appsGrid.setPadding(0,dp(4),0,dp(28));
         sc.addView(appsGrid);page.addView(sc,new LinearLayout.LayoutParams(-1,0,1));
@@ -245,7 +319,12 @@ public class MainActivity extends Activity {
         appsGrid.removeAllViews();
         List<AppItem> filtered=new ArrayList<>();
         for(AppItem item:applications){
-            if(query.isEmpty() || item.title.toLowerCase(new Locale("ru")).contains(query))filtered.add(item);
+            if(!query.isEmpty() && !item.title.toLowerCase(new Locale("ru")).contains(query))continue;
+            String name=(item.title+" "+item.pkg).toLowerCase(new Locale("ru"));
+            boolean social=name.matches(".*(telegram|whats|вк|vk|messenger|discord|signal|viber|сообщения).*");
+            boolean media=name.matches(".*(music|музык|youtube|видео|video|gallery|галерея|фото|camera|камера|suno|зву).*");
+            boolean system=name.matches(".*(setting|настрой|калькулятор|calc|проводник|files|файл|час|clock|calendar|календар).*");
+            if(category.equals("Все") || category.equals("Соцсети")&&social || category.equals("Медиа")&&media || category.equals("Система")&&system)filtered.add(item);
         }
         if(filtered.isEmpty())appsGrid.addView(text("Приложения не найдены",16,GREY,false));
         int size=4;
@@ -257,7 +336,7 @@ public class MainActivity extends Activity {
                     LinearLayout cell=column();cell.setGravity(Gravity.CENTER_HORIZONTAL);
                     LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,dp(105),1);
                     cp.setMargins(dp(2),dp(2),dp(2),dp(3));gridRow.addView(cell,cp);
-                    ImageView img=new ImageView(this);img.setImageDrawable(item.icon);img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    ImageView img=new ImageView(this);img.setImageDrawable(item.icon);img.setColorFilter(RED,android.graphics.PorterDuff.Mode.SRC_IN);img.setScaleType(ImageView.ScaleType.FIT_CENTER);
                     img.setPadding(dp(14),dp(12),dp(14),dp(12));
                     img.setBackground(surface(0xF0202023,LINE,16));
                     cell.addView(img,lp(62,62));

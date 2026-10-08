@@ -419,6 +419,111 @@ public class MainActivity extends Activity {
         p.setMargins(dp(3),dp(6),dp(3),dp(6));t.setLayoutParams(p);
         t.setOnClickListener(v->fn.run());return t;
     }
+
+    private LinearLayout createDialer(){
+        LinearLayout page=column();page.setBackgroundColor(0xFF070709);
+        page.setPadding(dp(18),dp(12),dp(18),dp(20));page.setVisibility(View.GONE);
+        LinearLayout header=row();
+        TextView title=text("ТЕЛЕФОН  //  BOMBAY:DARK",20,WHITE,true);
+        header.addView(title,new LinearLayout.LayoutParams(0,dp(55),1));
+        TextView exit=text("×",30,RED,true);exit.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        exit.setOnClickListener(v->show(0));header.addView(exit,lp(44,50));page.addView(header);
+        TextView over=text("НАБОР НОМЕРА",12,RED,true);over.setLetterSpacing(.1f);page.addView(over);
+        dialNumber=text("",32,WHITE,true);dialNumber.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        dialNumber.setSingleLine(true);dialNumber.setEllipsize(android.text.TextUtils.TruncateAt.START);
+        dialNumber.setBackground(surface(0xFF151517,LINE,14));
+        dialNumber.setPadding(dp(14),0,dp(12),0);
+        LinearLayout.LayoutParams display=lp(-1,66);display.setMargins(0,dp(12),0,dp(12));
+        page.addView(dialNumber,display);
+        TextView delete=action("⌫  УДАЛИТЬ ПОСЛЕДНЮЮ ЦИФРУ",()->{
+            if(!enteredNumber.isEmpty())enteredNumber=enteredNumber.substring(0,enteredNumber.length()-1);
+            dialNumber.setText(enteredNumber);
+        });
+        delete.setTextColor(GREY);page.addView(delete);
+        View spacer=new View(this);page.addView(spacer,new LinearLayout.LayoutParams(1,0,1));
+        String[][] numbers={{"1","2","3"},{"4","5","6"},{"7","8","9"},{"*","0","#"}};
+        for(String[] line:numbers){
+            LinearLayout row=row();
+            for(String number:line){
+                TextView digit=text(number,33,WHITE,true);digit.setGravity(Gravity.CENTER);
+                digit.setBackground(surface(PANEL,LINE,17));
+                LinearLayout.LayoutParams item=new LinearLayout.LayoutParams(0,dp(81),1);
+                item.setMargins(dp(5),dp(5),dp(5),dp(5));row.addView(digit,item);
+                digit.setOnClickListener(v->{
+                    if(enteredNumber.length()<28){enteredNumber+=number;dialNumber.setText(enteredNumber);}
+                });
+            }
+            page.addView(row);
+        }
+        TextView call=action("☎   ОТКРЫТЬ ВЫЗОВ",()->{
+            if(enteredNumber.isEmpty()){toast("Введите номер");return;}
+            Intent i=new Intent(Intent.ACTION_DIAL,Uri.fromParts("tel",enteredNumber,null));
+            safeLaunch(i);
+        });
+        call.setTextColor(WHITE);call.setTextSize(17);
+        call.setBackground(surface(0xFFB20724,RED,18));
+        LinearLayout.LayoutParams callParams=lp(-1,60);callParams.setMargins(0,dp(13),0,0);
+        page.addView(call,callParams);
+        TextView safety=text("Звонок подтверждается в системном приложении телефона.",11,GREY,false);
+        safety.setGravity(Gravity.CENTER);safety.setPadding(0,dp(8),0,0);page.addView(safety);
+        return page;
+    }
+    private LinearLayout createCalculator(){
+        LinearLayout page=column();page.setBackgroundColor(0xFF09090C);
+        page.setPadding(dp(18),dp(12),dp(18),dp(24));page.setVisibility(View.GONE);
+        LinearLayout header=row();
+        TextView title=text("КАЛЬКУЛЯТОР  //  BOMBAY:DARK",18,WHITE,true);
+        header.addView(title,new LinearLayout.LayoutParams(0,dp(55),1));
+        TextView exit=text("×",30,RED,true);exit.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        header.addView(exit,lp(44,48));exit.setOnClickListener(v->show(0));page.addView(header);
+        View spacer=new View(this);page.addView(spacer,new LinearLayout.LayoutParams(1,0,1));
+        calcDisplay=text("0",53,WHITE,true);calcDisplay.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams dp1=lp(-1,120);dp1.setMargins(0,dp(14),0,dp(14));
+        page.addView(calcDisplay,dp1);
+        String[][] keys={{"C","(",")","÷"},{"7","8","9","×"},{"4","5","6","−"},{"1","2","3","+"},{"±","0",",","="}};
+        for(String[] items:keys){
+            LinearLayout row=row();
+            for(String symbol:items){
+                TextView key=text(symbol,25,WHITE,true);key.setGravity(Gravity.CENTER);
+                boolean operator="÷×−+=".contains(symbol);
+                key.setBackground(surface(symbol.equals("=")?0xFFE71537:PANEL,symbol.equals("=")?RED:LINE,14));
+                key.setTextColor(operator?symbol.equals("=")?WHITE:RED:WHITE);
+                LinearLayout.LayoutParams cell=new LinearLayout.LayoutParams(0,dp(67),1);
+                cell.setMargins(dp(3),dp(4),dp(3),dp(4));row.addView(key,cell);
+                key.setOnClickListener(v->calculate(symbol));
+            }
+            page.addView(row);
+        }
+        return page;
+    }
+    private void calculate(String key){
+        if(key.equals("C"))calcInput="";
+        else if(key.equals("±")){
+            if(calcInput.startsWith("-"))calcInput=calcInput.substring(1);
+            else if(!calcInput.isEmpty())calcInput="-"+calcInput;
+        }
+        else if(key.equals("=")){
+            try{
+                String expression=calcInput.replace("×","*").replace("÷","/").replace("−","-").replace(",",".");
+                java.util.regex.Matcher m=java.util.regex.Pattern.compile("(-?\\d+(?:\\.\\d+)?)\\s*([+*/-])\\s*(-?\\d+(?:\\.\\d+)?)").matcher(expression);
+                if(m.matches()){
+                    double a=Double.parseDouble(m.group(1)),b=Double.parseDouble(m.group(3)),out=0;
+                    switch(m.group(2)){
+                        case "+":out=a+b;break;
+                        case "-":out=a-b;break;
+                        case "*":out=a*b;break;
+                        case "/":out=a/b;break;
+                    }
+                    if(!Double.isFinite(out))throw new ArithmeticException();
+                    calcInput=out==(long)out?Long.toString((long)out):Double.toString(out);
+                }
+            }catch(Throwable e){toast("Ошибка вычисления");calcInput="";}
+        }else if(key.equals("(")||key.equals(")")){
+            toast("Скобки пока не поддерживаются");
+        }
+        else if(calcInput.length()<40)calcInput+=key;
+        if(calcDisplay!=null)calcDisplay.setText(calcInput.isEmpty()?"0":calcInput);
+    }
     private void show(int page){
         if(home!=null)home.setVisibility(page==0?View.VISIBLE:View.GONE);
         if(drawer!=null)drawer.setVisibility(page==1?View.VISIBLE:View.GONE);

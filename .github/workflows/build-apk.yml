@@ -32,17 +32,17 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
           unzip -t app/build/outputs/apk/debug/app-debug.apk | tail -2
       - name: Rename installable APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk BOMBAY-DARK-Launcher-2.1-RC3.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk BOMBAY-DARK-Launcher-2.2-RC4.apk
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: BOMBAY-DARK-Launcher-2.1-RC3
-          path: BOMBAY-DARK-Launcher-2.1-RC3.apk
+          name: BOMBAY-DARK-Launcher-2.2-RC4
+          path: BOMBAY-DARK-Launcher-2.2-RC4.apk
           retention-days: 30
       - name: Publish test release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: launcher-2.1-rc3
-          name: BOMBAY DARK Launcher 2.1 RC3
+          tag_name: launcher-2.2-rc4
+          name: BOMBAY DARK Launcher 2.2 RC4
           prerelease: true
-          files: BOMBAY-DARK-Launcher-2.1-RC3.apk
+          files: BOMBAY-DARK-Launcher-2.2-RC4.apk
